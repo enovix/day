@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🎉 Friday Leave Game</title>
+  <style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #eef2f7;
+    text-align: center;
+    padding: 60px;
+  }
+
+  h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+
+  #luckyNumber {
+    font-size: 4em;
+    margin: 20px 0;
+    color: #2980b9;
+  }
+
+  #message {
+    font-size: 1.5em;
+    color: #27ae60;
+    margin-bottom: 20px;
+  }
+
+  button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+  }
+
+  #countdown {
+    margin-top: 20px;
+    font-size: 1em;
+    color: #e74c3c;
+  }
+
+  select {
+    font-size: 1em;
+    padding: 8px;
+    margin-bottom: 20px;
+  }
+
+  #log, #leaveWinners {
+    margin-top: 30px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  #log h3, #leaveWinners h3 {
+    margin-top: 0;
+  }
+
+  .confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+  }
+
+  /* ✅ Responsive media queries */
+  @media (max-width: 768px) {
+    body {
+      padding: 30px 15px;
+    }
+
+    h1 {
+      font-size: 1.5em;
+    }
+
+    #luckyNumber {
+      font-size: 3em;
+    }
+
+    #message {
+      font-size: 1.2em;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1em;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+    }
+
+    #log, #leaveWinners {
+      width: 100%;
+      font-size: 0.95em;
+    }
+  }
+
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 1.2em;
+    }
+
+    #luckyNumber {
+      font-size: 2.5em;
+    }
+
+    button, select {
+      font-size: 0.9em;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>🎉 Win a Free Friday Off!</h1>
+
+  <label for="playerSelect">Choose Your Name :</label>
+  <select id="playerSelect">
+    <option value="" disabled selected>Select</option>
+    <option value="Cecilia">Cecilia</option>
+    <option value="Charles">Charles</option>
+    <option value="James">James</option>
+    <option value="Thomas">Thomas</option>
+    <option value="Richard">Richard</option>
+  </select>
+
+  <div id="luckyNumber">--</div>
+  <div id="message"></div>
+  <button id="playBtn">Play</button>
+  <div id="countdown"></div>
+
+  <div id="leaveWinners">
+    <h3>🏖️ Friday Leave Winners</h3>
+    <ul id="leaveList"></ul>
+  </div>
+
+  <div id="log">
+    <h3>📝 Game Log</h3>
+    <ul id="logList"></ul>
+  </div>
+
+  <canvas class="confetti" id="confettiCanvas"></canvas>
+  <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3" preload="auto"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    window.onload = function () {
+      const playBtn = document.getElementById("playBtn");
+      const luckyNumberDisplay = document.getElementById("luckyNumber");
+      const messageDisplay = document.getElementById("message");
+      const countdownDisplay = document.getElementById("countdown");
+      const playerSelect = document.getElementById("playerSelect");
+      const logList = document.getElementById("logList");
+      const leaveList = document.getElementById("leaveList");
+      const confettiCanvas = document.getElementById("confettiCanvas");
+      const winSound = document.getElementById("winSound");
+
+      const INDIVIDUAL_COOLDOWN_MS = 5000;
+      const GLOBAL_COOLDOWN_MS = 10000;
+
+      const players = ["Cecilia", "Charles", "James", "Thomas", "Richard"];
+      const playerStats = {};
+      players.forEach(p => playerStats[p] = { wins: 0, plays: 0 });
+
+      const playerCooldowns = {};
+      let globalCooldownEnd = null;
+      let cooldownInterval = null;
+
+      let roundWinners = new Set();
+      let currentWinner = null;
+
+      function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+      }
+
+      function chooseNextWinner() {
+        const remaining = players.filter(p => !roundWinners.has(p));
+        if (remaining.length === 0) {
+          roundWinners.clear(); // Reset the cycle
+          return chooseNextWinner();
+        }
+        return shuffle(remaining)[0];
+      }
+
+      function updateButtonState() {
+        const currentPlayer = playerSelect.value;
+        const now = Date.now();
+
+        if (!currentPlayer) {
+          playBtn.disabled = true;
+          countdownDisplay.textContent = 'Select a player to play';
+          return;
+        }
+
+        if (globalCooldownEnd && now < globalCooldownEnd) {
+          const secondsLeft = Math.ceil((globalCooldownEnd - now) / 1000);
+          playBtn.disabled = true;
+          countdownDisplay.textContent = `⏳ Game is locked! Try again in ${secondsLeft}s...`;
+        } else {
+          const playerCooldownEnd = playerCooldowns[currentPlayer] || 0;
+          if (now < playerCooldownEnd) {
+            const secondsLeft = Math.ceil((playerCooldownEnd - now) / 1000);
+            playBtn.disabled = true;
+            countdownDisplay.textContent = `⏳ ${currentPlayer}, wait ${secondsLeft}s...`;
+          } else {
+            playBtn.disabled = false;
+            countdownDisplay.textContent = '';
+          }
+        }
+      }
+
+      function startCooldown(playerId, isGlobal = false) {
+        const now = Date.now();
+        if (isGlobal) {
+          globalCooldownEnd = now + GLOBAL_COOLDOWN_MS;
+        } else {
+          playerCooldowns[playerId] = now + INDIVIDUAL_COOLDOWN_MS;
+        }
+
+        updateButtonState();
+
+        if (cooldownInterval) clearInterval(cooldownInterval);
+        cooldownInterval = setInterval(() => {
+          updateButtonState();
+          const now = Date.now();
+          const playerCooldownDone = (playerCooldowns[playerId] || 0) <= now;
+          const globalCooldownDone = !globalCooldownEnd || globalCooldownEnd <= now;
+
+          if (globalCooldownDone && playerCooldownDone) {
+            clearInterval(cooldownInterval);
+            playBtn.disabled = false;
+            countdownDisplay.textContent = '';
+          }
+        }, 500);
+      }
+
+      function logPlay(player, number, win) {
+        const entry = document.createElement('li');
+        entry.textContent = `${new Date().toLocaleTimeString()} - ${player} got ${number} ${win ? '🎉 WIN' : '❌'}`;
+        logList.insertBefore(entry, logList.firstChild);
+      }
+
+      function addToLeaveWinners(player) {
+        const li = document.createElement("li");
+        li.textContent = `${player} - ${new Date().toLocaleDateString()}`;
+        leaveList.insertBefore(li, leaveList.firstChild);
+      }
+
+      function showConfetti() {
+        confetti.create(confettiCanvas, { resize: true })({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+
+      function handlePlay() {
+        const currentPlayer = playerSelect.value;
+        if (!currentPlayer) return;
+
+        if (!currentWinner) {
+          currentWinner = chooseNextWinner();
+        }
+
+        const number = currentPlayer === currentWinner ? 5 : Math.floor(Math.random() * 4) + 1;
+        luckyNumberDisplay.textContent = number;
+        playerStats[currentPlayer].plays++;
+
+        if (currentPlayer === currentWinner && number === 5) {
+          messageDisplay.textContent = `🎉 ${currentPlayer} wins a Friday off!`;
+          playerStats[currentPlayer].wins++;
+          roundWinners.add(currentPlayer);
+          currentWinner = null;
+          showConfetti();
+          winSound.currentTime = 0;
+          winSound.play();
+          logPlay(currentPlayer, number, true);
+          addToLeaveWinners(currentPlayer);
+          startCooldown(currentPlayer, true); // Global cooldown
+        } else {
+          messageDisplay.textContent = `😓 ${currentPlayer}, try again next time!`;
+          logPlay(currentPlayer, number, false);
+          startCooldown(currentPlayer); // Individual cooldown
+        }
+      }
+
+      playBtn.addEventListener("click", handlePlay);
+
+      playerSelect.addEventListener("change", () => {
+        messageDisplay.textContent = '';
+        luckyNumberDisplay.textContent = '--';
+        updateButtonState();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !playBtn.disabled) {
+          handlePlay();
+        }
+      });
+
+      updateButtonState();
+    };
+  </script>
+</body>
+</html>
