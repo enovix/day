@@ -89,54 +89,57 @@
   }
 
   /* ✅ Responsive media queries */
-  @media (max-width: 768px) {
-    body {
-      padding: 30px 15px;
-    }
-
-    h1 {
-      font-size: 1.5em;
-    }
-
-    #luckyNumber {
-      font-size: 3em;
-    }
-
-    #message {
-      font-size: 1.2em;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 1em;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      font-size: 1em;
-    }
-
-    #log, #leaveWinners {
-      width: 100%;
-      font-size: 0.95em;
-    }
+  /* Responsive media queries - adjusted for standard readable sizes */
+@media (max-width: 768px) {
+  body {
+    padding: 30px 15px;
   }
 
-  @media (max-width: 480px) {
-    h1 {
-      font-size: 1.2em;
-    }
-
-    #luckyNumber {
-      font-size: 2.5em;
-    }
-
-    button, select {
-      font-size: 0.9em;
-    }
+  h1 {
+    font-size: 2em; /* bigger than before */
   }
+
+  #luckyNumber {
+    font-size: 3.5em; /* keep large but not huge */
+  }
+
+  #message {
+    font-size: 1.3em;
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1em;
+  }
+
+  select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1em;
+  }
+
+  #log, #leaveWinners {
+    width: 100%;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.8em; /* keep readable */
+  }
+
+  #luckyNumber {
+    font-size: 3em;
+  }
+
+  button, select {
+    font-size: 1em;
+  }
+}
+
+  
 </style>
 </head>
 <body>
