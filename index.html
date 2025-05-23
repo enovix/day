@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎉 Friday Leave Game</title>
   <style>
     * {
@@ -27,9 +27,10 @@
     }
 
     label {
-      font-size: large;
+      font-size: 1.2rem;
       color: #34495e;
       margin-bottom: 0.5rem;
+      font-size: large;
     }
 
     #luckyNumber {
@@ -68,8 +69,10 @@
     #countdown {
       margin-top: 1rem;
       font-size: 1.5rem;
-      font-weight: 200px;
+      font-weight: 400;
       color: #e74c3c;
+      display: block;
+      min-height: 2rem;
     }
 
     #log, #leaveWinners {
@@ -121,6 +124,7 @@
 </head>
 <body>
   <h1>🎉 Win a Free Friday Off!</h1>
+
   <label for="playerSelect">Choose Your Name :</label>
   <select id="playerSelect">
     <option value="" disabled selected>Select</option>
@@ -130,20 +134,25 @@
     <option value="Thomas">Thomas</option>
     <option value="Richard">Richard</option>
   </select>
+
   <div id="luckyNumber">--</div>
   <div id="message"></div>
   <button id="playBtn">Play</button>
   <div id="countdown"></div>
+
   <div id="leaveWinners">
     <h3>🏓️ Friday Leave Winners</h3>
     <ul id="leaveList"></ul>
   </div>
+
   <div id="log">
     <h3>📜 Game Log</h3>
     <ul id="logList"></ul>
   </div>
+
   <canvas class="confetti" id="confettiCanvas"></canvas>
   <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3" preload="auto"></audio>
+
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
     window.onload = function () {
@@ -157,18 +166,23 @@
       const confettiCanvas = document.getElementById("confettiCanvas");
       const winSound = document.getElementById("winSound");
 
+      // Game settings
+      // Cooldown times in milliseconds
+
       const INDIVIDUAL_COOLDOWN_MS = 5000;
-      const GLOBAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+      const GLOBAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
       const players = ["Cecilia", "Charles", "James", "Thomas", "Richard"];
       const playerStats = {};
       players.forEach(p => playerStats[p] = { wins: 0, plays: 0 });
 
       const playerCooldowns = {};
+      let globalCooldownEnd = null;
       let cooldownInterval = null;
-
       let roundWinners = new Set();
       let currentWinner = null;
+
+      // Initialize player stats
 
       function shuffle(array) {
         return array.sort(() => Math.random() - 0.5);
@@ -183,10 +197,22 @@
         return shuffle(remaining)[0];
       }
 
+      function updateCountdownDisplay() {
+        const now = Date.now();
+        if (globalCooldownEnd && now < globalCooldownEnd) {
+          const timeLeftMs = globalCooldownEnd - now;
+          const totalSeconds = Math.floor(timeLeftMs / 1000);
+          const days = Math.floor(totalSeconds / (24 * 60 * 60));
+          const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          countdownDisplay.textContent = `⏳ Game is locked! Try again in ${days}d ${hours}h ${minutes}m ${seconds}s...`;
+        }
+      }
+
       function updateButtonState() {
         const currentPlayer = playerSelect.value;
         const now = Date.now();
-        const globalCooldownEnd = parseInt(localStorage.getItem('globalCooldownEnd'), 10);
 
         if (!currentPlayer) {
           playBtn.disabled = true;
@@ -195,14 +221,8 @@
         }
 
         if (globalCooldownEnd && now < globalCooldownEnd) {
-          const timeLeftMs = globalCooldownEnd - now;
-          const totalSeconds = Math.floor(timeLeftMs / 1000);
-          const days = Math.floor(totalSeconds / (24 * 60 * 60));
-          const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / 3600);
-          const minutes = Math.floor((totalSeconds % 3600) / 60);
-          const seconds = totalSeconds % 60;
           playBtn.disabled = true;
-          countdownDisplay.textContent = `⏳ Game is locked! Try again in ${days}d ${hours}h ${minutes}m ${seconds}s...`;
+          updateCountdownDisplay();
         } else {
           const playerCooldownEnd = playerCooldowns[currentPlayer] || 0;
           if (now < playerCooldownEnd) {
@@ -219,14 +239,24 @@
       function startCooldown(playerId, isGlobal = false) {
         const now = Date.now();
         if (isGlobal) {
-          const globalCooldownEnd = now + GLOBAL_COOLDOWN_MS;
-          localStorage.setItem('globalCooldownEnd', globalCooldownEnd);
+          globalCooldownEnd = now + GLOBAL_COOLDOWN_MS;
         } else {
           playerCooldowns[playerId] = now + INDIVIDUAL_COOLDOWN_MS;
         }
-        updateButtonState();
+
         if (cooldownInterval) clearInterval(cooldownInterval);
-        cooldownInterval = setInterval(updateButtonState, 1000);
+        cooldownInterval = setInterval(() => {
+          updateButtonState();
+          const now = Date.now();
+          if ((!globalCooldownEnd || globalCooldownEnd <= now) &&
+              (!playerCooldowns[playerId] || playerCooldowns[playerId] <= now)) {
+            clearInterval(cooldownInterval);
+            playBtn.disabled = false;
+            countdownDisplay.textContent = '';
+          }
+        }, 1000);
+
+        updateButtonState();
       }
 
       function logPlay(player, number, win) {
@@ -245,17 +275,19 @@
         confetti.create(confettiCanvas, { resize: true })({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 },
+          origin: { y: 0.6 }
         });
       }
 
       function handlePlay() {
         const currentPlayer = playerSelect.value;
         if (!currentPlayer) return;
+
         if (!currentWinner) currentWinner = chooseNextWinner();
         const number = currentPlayer === currentWinner ? 5 : Math.floor(Math.random() * 4) + 1;
         luckyNumberDisplay.textContent = number;
         playerStats[currentPlayer].plays++;
+
         if (currentPlayer === currentWinner && number === 5) {
           messageDisplay.textContent = `🎉 ${currentPlayer} wins a Friday off!`;
           playerStats[currentPlayer].wins++;
@@ -266,11 +298,11 @@
           winSound.play();
           logPlay(currentPlayer, number, true);
           addToLeaveWinners(currentPlayer);
-          startCooldown(currentPlayer, true);
+          startCooldown(currentPlayer, true); // Global cooldown
         } else {
           messageDisplay.textContent = `😓 ${currentPlayer}, try again next time!`;
           logPlay(currentPlayer, number, false);
-          startCooldown(currentPlayer);
+          startCooldown(currentPlayer); // Individual cooldown
         }
       }
 
@@ -283,6 +315,7 @@
       document.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !playBtn.disabled) handlePlay();
       });
+
       updateButtonState();
     };
   </script>
