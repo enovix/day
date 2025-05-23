@@ -2,144 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎉 Friday Leave Game</title>
   <style>
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+    * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #eef2f7;
-    text-align: center;
-    padding: 60px;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #eef2f7;
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.5rem;
+  line-height: 1.6;
+}
 
-  h1 {
-    color: #2c3e50;
-    margin-bottom: 20px;
-  }
+h1 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 2.2rem;
+}
 
-  #luckyNumber {
-    font-size: 4em;
-    margin: 20px 0;
-    color: #2980b9;
-  }
 
-  #message {
-    font-size: 1.5em;
-    color: #27ae60;
-    margin-bottom: 20px;
-  }
+label {
+  font-size: 1.2rem;
+  color: #34495e;
+  margin-bottom: 0.5rem;
+  font-size: large;
 
-  button {
-    padding: 15px 30px;
-    font-size: 1.2em;
-    background-color: #2980b9;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+}
 
-  button:disabled {
-    background-color: #bdc3c7;
-    cursor: not-allowed;
-  }
+#luckyNumber {
+  font-size: 3.2rem;
+  margin: 1rem 0;
+  color: #2980b9;
+}
 
-  #countdown {
-    margin-top: 20px;
-    font-size: 1em;
-    color: #e74c3c;
-  }
+#message {
+  font-size: 1.4rem;
+  color: #27ae60;
+  margin-bottom: 1rem;
+}
 
-  select {
-    font-size: 1em;
-    padding: 8px;
-    margin-bottom: 20px;
-  }
+button {
+  padding: 1rem 1.5rem;
+  font-size: 1.3rem;
+  width: 100%;
+  max-width: 320px;
+  background-color: #2980b9;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
 
-  #log, #leaveWinners {
-    margin-top: 30px;
-    text-align: left;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
+select {
+  font-size: 1.2rem;
+  padding: 0.75rem;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+}
 
-  #log h3, #leaveWinners h3 {
-    margin-top: 0;
-  }
+#countdown {
+  margin-top: 1rem;
+  font-size: 1.5rem;
+  font-weight: 200px;
+  color: #e74c3c;
+}
 
-  .confetti {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-  }
+#log, #leaveWinners {
+  margin: 2rem auto;
+  background: white;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 420px;
+  font-size: 1rem;
+  text-align: left;
+}
 
-  /* ✅ Responsive media queries */
-  /* Responsive media queries - adjusted for standard readable sizes */
+h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+/* Improve overall font scaling for small devices */
 @media (max-width: 768px) {
-  body {
-    padding: 30px 15px;
-  }
-
-  h1 {
-    font-size: 2em; /* bigger than before */
-  }
-
-  #luckyNumber {
-    font-size: 3.5em; /* keep large but not huge */
-  }
-
-  #message {
-    font-size: 1.3em;
-  }
-
-  button {
-    width: 100%;
-    padding: 14px;
-    font-size: 1.1em;
-  }
-
-  select {
-    width: 100%;
-    padding: 10px;
-    font-size: 1.1em;
-  }
-
-  #log, #leaveWinners {
-    width: 100%;
-    font-size: 1em;
+  html {
+    font-size: 19px;
   }
 }
 
 @media (max-width: 480px) {
-  h1 {
-    font-size: 1.8em; /* keep readable */
+  html {
+    font-size: 12px;
   }
 
-  #luckyNumber {
-    font-size: 3em;
+  h1 {
+    font-size: 1.5rem;
   }
 
   button, select {
-    font-size: 1em;
+    font-size: 1.2rem;
   }
 }
 
-  
+
 </style>
 </head>
 <body>
@@ -187,7 +170,7 @@
       const winSound = document.getElementById("winSound");
 
       const INDIVIDUAL_COOLDOWN_MS = 5000;
-      const GLOBAL_COOLDOWN_MS = 10000;
+      const GLOBAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
       const players = ["Cecilia", "Charles", "James", "Thomas", "Richard"];
       const playerStats = {};
@@ -224,9 +207,22 @@
         }
 
         if (globalCooldownEnd && now < globalCooldownEnd) {
-          const secondsLeft = Math.ceil((globalCooldownEnd - now) / 1000);
+          // Global cooldown is active
+          const timeLeftMs = globalCooldownEnd - now;
+          const totalSeconds = Math.floor(timeLeftMs / 1000);
+          const days = Math.floor(totalSeconds / (24 * 60 * 60));
+          const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+
           playBtn.disabled = true;
-          countdownDisplay.textContent = `⏳ Game is locked! Try again in ${secondsLeft}s...`;
+          countdownDisplay.textContent = `⏳ Game is locked! Try again in ${days}d ${hours}h ${minutes}m ${seconds}s...`;
+
+          // const secondsLeft = Math.ceil((globalCooldownEnd - now) / 1000);
+          // playBtn.disabled = true;
+          // countdownDisplay.textContent = `⏳ Game is locked! Try again in ${secondsLeft}s...`;
+
+          
         } else {
           const playerCooldownEnd = playerCooldowns[currentPlayer] || 0;
           if (now < playerCooldownEnd) {
@@ -281,7 +277,7 @@
         confetti.create(confettiCanvas, { resize: true })({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 }
+          origin: { y: 0.6 },
         });
       }
 
